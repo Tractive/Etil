@@ -1,1 +1,6 @@
-include ':app', ':compiler', ':api'
+include ':etil'
+include ':etil-compiler'
+include ':etil-annotations'
+include ':etil-sample'
+
+

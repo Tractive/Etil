@@ -1,0 +1,21 @@
+apply plugin: 'com.android.library'
+
+android {
+
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+
+    }
+
+}
+
+dependencies {
+    compile project(path: ':etil-annotations')
+
+    compile deps.supportv4
+
+    testCompile deps.junit
+}

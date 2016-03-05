@@ -30,7 +30,6 @@ dependencies {
     compile project(path: ':etil')
     apt project(':etil-compiler')
 
-    compile deps.supportv4
     compile deps.supportv7
 
     testCompile deps.junit

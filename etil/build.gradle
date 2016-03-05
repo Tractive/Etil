@@ -15,7 +15,5 @@ android {
 dependencies {
     compile project(path: ':etil-annotations')
 
-    compile deps.supportv4
-
     testCompile deps.junit
 }

@@ -1,8 +1,9 @@
-package etil.example;
+package com.tractive.android.etil.sample;
 
 
 import android.app.Activity;
 import android.os.Bundle;
+
 
 public class MainActivity extends Activity {
 

@@ -1,7 +1,7 @@
-package etil.compiler;
+package com.tractive.android.etil.compiler;
 
-import etil.EtilField;
-import etil.EtilTable;
+import com.tractive.android.etil.annotations.EtilField;
+import com.tractive.android.etil.annotations.EtilTable;
 
 import java.util.ArrayList;
 import java.util.List;

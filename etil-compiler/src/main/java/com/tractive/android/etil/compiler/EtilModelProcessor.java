@@ -1,9 +1,9 @@
-package etil.compiler;
+package com.tractive.android.etil.compiler;
 
 import com.google.auto.service.AutoService;
 
-import etil.EtilField;
-import etil.EtilTable;
+import com.tractive.android.etil.annotations.EtilField;
+import com.tractive.android.etil.annotations.EtilTable;
 
 import java.io.IOException;
 import java.util.Collections;

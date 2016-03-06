@@ -1,4 +1,4 @@
-package etil.compiler;
+package com.tractive.android.etil.compiler;
 
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -24,11 +24,11 @@ public class EtilTableClasses {
     public static final String CLASS_NAME = "EtilMapper";
 
 
-    public List<EtilTableAnnotatedClass> mEtilTableClasses = new ArrayList<>();
+    public List<com.tractive.android.etil.compiler.EtilTableAnnotatedClass> mEtilTableClasses = new ArrayList<>();
     private ClassName mCursorClass;
 
 
-    public void add(EtilTableAnnotatedClass _annotatedClass) {
+    public void add(com.tractive.android.etil.compiler.EtilTableAnnotatedClass _annotatedClass) {
         mEtilTableClasses.add(_annotatedClass);
 
     }
@@ -54,7 +54,7 @@ public class EtilTableClasses {
                 .addParameter(mCursorClass, "_cursor")
                 .beginControlFlow("switch (_class.getSimpleName())");
 
-        for (EtilTableAnnotatedClass _modelClass : mEtilTableClasses) {
+        for (com.tractive.android.etil.compiler.EtilTableAnnotatedClass _modelClass : mEtilTableClasses) {
             main.addCode("case \"" + _modelClass.getSimpleTypeName() + "\":\n")
                     .addStatement("return (T) cursorTo" + _modelClass.getSimpleTypeName() + "(_cursor)");
         }
@@ -78,7 +78,7 @@ public class EtilTableClasses {
 
     private Iterable<MethodSpec> createMappingMethods() {
         List<MethodSpec> methodSpecs = new ArrayList<>();
-        for (EtilTableAnnotatedClass _modelClass : mEtilTableClasses) {
+        for (com.tractive.android.etil.compiler.EtilTableAnnotatedClass _modelClass : mEtilTableClasses) {
 
             MethodSpec.Builder builder = MethodSpec
                     .methodBuilder("cursorTo" + _modelClass.getSimpleTypeName())
@@ -86,7 +86,7 @@ public class EtilTableClasses {
                     .addParameter(mCursorClass, "_cursor")
                     .addStatement("$L model = new $L()", _modelClass.getTypeElement(), _modelClass.getTypeElement());
 
-            for (EtilTableAnnotatedClass.FieldAndColumnInfo _info : _modelClass.getFieldAndColumnInfo()) {
+            for (com.tractive.android.etil.compiler.EtilTableAnnotatedClass.FieldAndColumnInfo _info : _modelClass.getFieldAndColumnInfo()) {
                 builder.addStatement(
                         "model." + _info.fieldName + " = " + "_cursor." + _info.accessMethod + "(_cursor.getColumnIndex(\"" + _info.columnName + "\"))");
             }

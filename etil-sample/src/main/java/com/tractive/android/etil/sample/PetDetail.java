@@ -1,7 +1,7 @@
-package etil.example;
+package com.tractive.android.etil.sample;
 
-import etil.EtilField;
-import etil.EtilTable;
+import com.tractive.android.etil.annotations.EtilField;
+import com.tractive.android.etil.annotations.EtilTable;
 
 /**
  * Created by stephan on 03/03/16.

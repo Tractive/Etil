@@ -1,4 +1,4 @@
-package etil;
+package com.tractive.android.etil.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,9 +7,8 @@ import java.lang.annotation.Target;
 
 
 @Retention(RetentionPolicy.CLASS)
-@Target(ElementType.TYPE)
-public @interface EtilTable {
-
+@Target(ElementType.FIELD)
+public @interface EtilField {
     String value();
 
 }

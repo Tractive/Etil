@@ -12,7 +12,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.tractive.android.etil"
+        applicationId "etil.example"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

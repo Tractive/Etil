@@ -22,10 +22,9 @@ public class EtilTableAnnotatedClass {
 
         info.fieldName = _member.getSimpleName().toString();
         info.columnName = _member.getAnnotation(EtilField.class).value();
+        info.fieldType = _member.asType().toString().toLowerCase();
 
-        String fieldType = _member.asType().toString().toLowerCase();
-
-        switch (fieldType) {
+        switch ( info.fieldType) {
             case "int":
                 info.accessMethod = "getInt";
 
@@ -39,8 +38,9 @@ public class EtilTableAnnotatedClass {
 
                 break;
             case "boolean":
+                //getBoolean does not exist in sqlite -> http://stackoverflow.com/questions/4088080/get-boolean-from-database-using-android-and-sqlite.
+                // That is why we handle the field in the EditTableClasses separately for booleans.
                 info.accessMethod = "getInt";
-
                 break;
             case "float":
                 info.accessMethod = "getFloat";
@@ -51,7 +51,7 @@ public class EtilTableAnnotatedClass {
 
                 break;
             default:
-                throw new IllegalArgumentException("EtilField Type is not supported: " + fieldType);
+                throw new IllegalArgumentException("EtilField Type is not supported: " + info.fieldType);
 
         }
 
@@ -64,6 +64,7 @@ public class EtilTableAnnotatedClass {
         public String fieldName;
         public String columnName;
         public String accessMethod;
+        public String fieldType;
     }
 
     private String mTableName;

@@ -50,7 +50,7 @@ public class EtilTableClasses {
 
                 .returns(TypeVariableName.get("T"))
                 .addTypeVariable(TypeVariableName.get("T"))
-                .addParameter(ParameterizedTypeName.get(ClassName.get("java.lang","Class"), TypeVariableName.get("T")), "_class")
+                .addParameter(ParameterizedTypeName.get(ClassName.get("java.lang", "Class"), TypeVariableName.get("T")), "_class")
                 .addParameter(mCursorClass, "_cursor")
                 .beginControlFlow("switch (_class.getSimpleName())");
 
@@ -87,8 +87,10 @@ public class EtilTableClasses {
                     .addStatement("$L model = new $L()", _modelClass.getTypeElement(), _modelClass.getTypeElement());
 
             for (com.tractive.android.etil.compiler.EtilTableAnnotatedClass.FieldAndColumnInfo _info : _modelClass.getFieldAndColumnInfo()) {
-                builder.addStatement(
-                        "model." + _info.fieldName + " = " + "_cursor." + _info.accessMethod + "(_cursor.getColumnIndex(\"" + _info.columnName + "\"))");
+                if (_info.fieldType.equals("boolean"))
+                    builder.addStatement("model." + _info.fieldName + " = " + "_cursor.getInt(_cursor.getColumnIndex(\"" + _info.columnName + "\")) != 0");
+                else
+                    builder.addStatement("model." + _info.fieldName + " = " + "_cursor." + _info.accessMethod + "(_cursor.getColumnIndex(\"" + _info.columnName + "\"))");
             }
 
             builder.returns(ClassName.get(_modelClass.getTypeElement()))

@@ -14,8 +14,26 @@ public class PetDetail {
     public String name;
 
     @EtilField("birthday")
-    public String birthday;
+    public long birthday;
+    @EtilField("created_at")
+    public Long created_at;
 
     @EtilField("breed_mixed")
     public boolean breed_mixed;
+    @EtilField("neuterd")
+    public Boolean neuterd;
+
+    @EtilField("weight")
+    public float weight;
+    @EtilField("height")
+    public Float height;
+
+    @EtilField("legs")
+    public int legs;
+    @EtilField("ears")
+    public Integer ears;
+
+
+
+
 }

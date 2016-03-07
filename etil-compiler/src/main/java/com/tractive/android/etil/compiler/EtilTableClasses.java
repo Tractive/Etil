@@ -87,7 +87,7 @@ public class EtilTableClasses {
                     .addStatement("$L model = new $L()", _modelClass.getTypeElement(), _modelClass.getTypeElement());
 
             for (com.tractive.android.etil.compiler.EtilTableAnnotatedClass.FieldAndColumnInfo _info : _modelClass.getFieldAndColumnInfo()) {
-                if (_info.fieldType.equals("boolean"))
+                if (_info.fieldType.equals("boolean") || _info.fieldType.equals("java.lang.boolean"))
                     builder.addStatement("model." + _info.fieldName + " = " + "_cursor.getInt(_cursor.getColumnIndex(\"" + _info.columnName + "\")) != 0");
                 else
                     builder.addStatement("model." + _info.fieldName + " = " + "_cursor." + _info.accessMethod + "(_cursor.getColumnIndex(\"" + _info.columnName + "\"))");

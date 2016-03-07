@@ -15,4 +15,7 @@ public class PetDetail {
 
     @EtilField("birthday")
     public String birthday;
+
+    @EtilField("breed_mixed")
+    public boolean breed_mixed;
 }

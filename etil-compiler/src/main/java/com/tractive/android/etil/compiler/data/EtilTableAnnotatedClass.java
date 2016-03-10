@@ -1,4 +1,4 @@
-package com.tractive.android.etil.compiler;
+package com.tractive.android.etil.compiler.data;
 
 import com.tractive.android.etil.annotations.EtilField;
 import com.tractive.android.etil.annotations.EtilTable;
@@ -11,9 +11,6 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.MirroredTypeException;
 
-/**
- * Created by stephan on 03/03/16.
- */
 public class EtilTableAnnotatedClass {
 
     public void addField(VariableElement _member) throws IllegalArgumentException {
@@ -85,9 +82,7 @@ public class EtilTableAnnotatedClass {
                             EtilTable.class.getSimpleName(), classElement.getQualifiedName().toString()));
         }
 
-        // Get the full QualifiedTypeName
         try {
-            Class<?> clazz = annotatedClassElement.getClass();
 
             qualifiedSuperClassName = annotatedClassElement.getQualifiedName().toString();
             simpleTypeName = annotatedClassElement.getSimpleName().toString();

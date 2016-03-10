@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService;
 
 import com.tractive.android.etil.annotations.EtilField;
 import com.tractive.android.etil.annotations.EtilTable;
+import com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -23,20 +24,14 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 
-/**
- * Created by stephan on 03/03/16.
- */
+
 @AutoService(Processor.class)
 public class EtilModelProcessor extends AbstractProcessor {
 
-    private Messager messager;
-
-
-    private Elements elementUtils;
-    private Filer filer;
+    private Messager mMessager;
+    private Filer mFiler;
 
 
     @Override
@@ -52,13 +47,14 @@ public class EtilModelProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
-        HashMap<String, EtilTableAnnotatedClass> etilTableClasses = new HashMap<>();
-        EtilTableClasses classes = new EtilTableClasses();
+        HashMap<String, com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass> etilTableClasses = new HashMap<>();
+        EtilMapperGenerator classes = new EtilMapperGenerator();
 
         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(EtilTable.class)) {
             TypeElement typeElement = (TypeElement) annotatedElement;
             try {
-                EtilTableAnnotatedClass annotatedClass = new EtilTableAnnotatedClass(typeElement);
+                com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass
+                        annotatedClass = new com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass(typeElement);
 
                 if (!isValidClass(annotatedClass)) {
                     return true;
@@ -101,7 +97,7 @@ public class EtilModelProcessor extends AbstractProcessor {
         }
 
         try {
-            classes.generateCode(elementUtils, filer);
+            classes.generateCode(mFiler);
             return true;
         } catch (IOException e) {
             error(null, e.getMessage());
@@ -118,12 +114,11 @@ public class EtilModelProcessor extends AbstractProcessor {
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
-        messager = processingEnv.getMessager();
-        elementUtils = processingEnv.getElementUtils();
-        filer = processingEnv.getFiler();
+        mMessager = processingEnv.getMessager();
+        mFiler = processingEnv.getFiler();
     }
 
-    private boolean isValidClass(EtilTableAnnotatedClass item) {
+    private boolean isValidClass(com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass item) {
 
         // Cast to TypeElement, has more type specific methods
         TypeElement classElement = item.getTypeElement();
@@ -159,6 +154,6 @@ public class EtilModelProcessor extends AbstractProcessor {
     }
 
     private void error(Element _element, String _message, Object... args) {
-        messager.printMessage(Diagnostic.Kind.ERROR, String.format(_message, args), _element);
+        mMessager.printMessage(Diagnostic.Kind.ERROR, String.format(_message, args), _element);
     }
 }

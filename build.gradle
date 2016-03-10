@@ -1,5 +1,4 @@
 subprojects { project ->
-   // group = GROUP
 
     repositories {
         mavenCentral()

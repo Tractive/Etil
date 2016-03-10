@@ -26,7 +26,7 @@ public class Pet  {
 
 Supported Datatypes: 
 * Primitve Types: int, long,  float, double, boolean
-* Types. String, Intger, Long, Float, Double, Boolean
+* Types: String, Intger, Long, Float, Double, Boolean
 
 It is assumed that you use integer values (0 or 1) to represent boolean values in your sqlite databse. <br>
 "_id" fields are not added to the ContentValues when converting a model to their ContentValues.
@@ -56,5 +56,27 @@ pet.age = 12;
 ContentValues petContentValues =  EtilMapper.mapModelToContentValues(pet);
 ```
 Calling with a parameter that doesnt have the @EtilTable("...") annoation will result in a IllegalArgumentException.
+
+## Download
+
+##### Gradle
+In your build.gradle in your root folder:
+
+```gradle
+repositories {
+	maven { url "https://jitpack.io" }
+}
+```
+In your build.gradle in your app folder:
+
+```gradle
+apply plugin: 'com.neenbedankt.android-apt'
+​
+dependencies {
+	  compile 'com.github.tractive.etil:etil-annotations:v0.4'
+	  apt 'com.github.tractive.etil:etil-compiler:v0.4'
+}
+```
+For the current Version check the releases.
 
 

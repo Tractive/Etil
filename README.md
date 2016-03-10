@@ -57,6 +57,56 @@ ContentValues petContentValues =  EtilMapper.mapModelToContentValues(pet);
 ```
 Calling with a parameter that doesnt have the @EtilTable("...") annoation will result in a IllegalArgumentException.
 
+##Advanced Usage
+You can also inherited model classes some models use the same fields. For example:
+
+```java
+public class Animal  {
+    @EtilField("_id")
+    public long id;
+
+    @EtilField("name")
+    public String name;
+}
+
+@EtilTable("dog")
+public class Dog extends Animal {
+    @EtilField("has_a_tracker")
+    public boolean hasATracker;
+}
+
+@EtilTable("cat")
+public class Cat extends Animal {
+    @EtilField("secretly_plots_to_kill_you")
+    public boolean secretlyPlotsToKillYou;
+}
+```
+You have 2 tables in your database - Cat and Dog - which shares some fields in the Animal class. If you try to convert a Cursor to Cat object Etil will set "id", "name" and "secretlyPlotsToKillYou".
+
+Even works with more than one inheritance:
+
+```java
+public class Animal  {
+    @EtilField("_id")
+    public long id;
+
+    @EtilField("name")
+    public String name;
+}
+
+public class Mammal extends Animal {
+    @EtilField("has_a_tracker")
+    public boolean hasATracker;
+}
+
+@EtilTable("cat")
+public class Cat extends Mammal {
+    @EtilField("secretly_plots_to_kill_you")
+    public boolean secretlyPlotsToKillYou;
+}
+```
+Converting Cursor to Cat will set "id", "name", "hasATracker" and "secretlyPlotsToKillYou".
+
 ## Download
 
 ##### Gradle
@@ -73,10 +123,32 @@ In your build.gradle in your app folder:
 apply plugin: 'com.neenbedankt.android-apt'
 ​
 dependencies {
-	  compile 'com.github.tractive.etil:etil-annotations:v0.4'
-	  apt 'com.github.tractive.etil:etil-compiler:v0.4'
+	  compile 'com.github.tractive.etil:etil-annotations:v0.4.1'
+	  apt 'com.github.tractive.etil:etil-compiler:v0.4.1'
 }
 ```
 For the current Version check the releases.
 
+##TODO
 
+#####Testing
+#####Javadoc + General Comments
+#####More Comlicated Inheritance
+For example:
+```java
+@EtilTable("animal")
+public class Animal  {
+    @EtilField("_id")
+    public long id;
+
+    @EtilField("name")
+    public String name;
+}
+
+@EtilTable("cat")
+public class Cat extends Animal {
+    @EtilField("secretly_plots_to_kill_you")
+    public boolean secretlyPlotsToKillYou;
+}
+```
+If cat extends from animal and both are tables in your database (as indicated by the EtilTable annoation), it won't work properly. (if you have that specific case for whatever reason)

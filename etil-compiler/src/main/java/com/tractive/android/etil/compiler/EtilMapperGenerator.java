@@ -112,7 +112,7 @@ public class EtilMapperGenerator {
 
             MethodSpec.Builder builder = MethodSpec
                     .methodBuilder(decapitalize(_etilTableClass.getSimpleTypeName()) + "ToContentValues")
-                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                    .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                     .addTypeVariable(mTypeVariableT)
                     .addParameter(mTypeVariableT, "_model")
                     .addStatement("$L contentValues = new $L()", mContentValuesClass, mContentValuesClass)
@@ -143,7 +143,7 @@ public class EtilMapperGenerator {
 
             MethodSpec.Builder builder = MethodSpec
                     .methodBuilder("cursorTo" + _etilTableClass.getSimpleTypeName())
-                    .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                    .addModifiers(Modifier.PRIVATE, Modifier.STATIC)
                     .addParameter(mCursorClass, "_cursor")
                     .addStatement("$L model = new $L()", _etilTableClass.getTypeElement(), _etilTableClass.getTypeElement());
 

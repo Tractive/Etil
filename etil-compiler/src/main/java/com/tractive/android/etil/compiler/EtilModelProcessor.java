@@ -7,8 +7,12 @@ import com.tractive.android.etil.annotations.EtilTable;
 import com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -24,6 +28,9 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 
@@ -32,6 +39,7 @@ public class EtilModelProcessor extends AbstractProcessor {
 
     private Messager mMessager;
     private Filer mFiler;
+    private Types mTypeUtils;
 
 
     @Override
@@ -48,6 +56,7 @@ public class EtilModelProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
         HashMap<String, com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass> etilTableClasses = new HashMap<>();
+        HashMap<String, List<EtilTableAnnotatedClass.FieldAndColumnInfo>> additionalTableClasses = new HashMap<>();
         EtilMapperGenerator classes = new EtilMapperGenerator();
 
         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(EtilTable.class)) {
@@ -79,11 +88,20 @@ public class EtilModelProcessor extends AbstractProcessor {
                 return true;
             }
 
-            EtilTableAnnotatedClass table = etilTableClasses.get(variableElement.getEnclosingElement().getSimpleName().toString());
+            String simpleNameClass = variableElement.getEnclosingElement().getSimpleName().toString();
+            EtilTableAnnotatedClass table = etilTableClasses.get(simpleNameClass);
 
             if (table == null) {
-                error(annotatedMember, "Model is missing EtilTable annotation");
-                return true;
+
+                List<EtilTableAnnotatedClass.FieldAndColumnInfo> fieldInfos = additionalTableClasses.get(simpleNameClass);
+
+                if (fieldInfos == null) {
+                    fieldInfos = new ArrayList<>();
+                    additionalTableClasses.put(simpleNameClass, fieldInfos);
+                }
+
+                fieldInfos.add(EtilTableAnnotatedClass.generateField(variableElement));
+                continue;
             }
 
             try {
@@ -94,6 +112,38 @@ public class EtilModelProcessor extends AbstractProcessor {
 
             }
 
+        }
+
+        for (Map.Entry<String, List<EtilTableAnnotatedClass.FieldAndColumnInfo>> additionalEntry : additionalTableClasses.entrySet()) {
+            for (Map.Entry<String, EtilTableAnnotatedClass> etilEntry : etilTableClasses.entrySet()) {
+
+                TypeMirror typeMirror = etilEntry.getValue().getTypeElement().getSuperclass();
+
+                boolean foundSuperType = true;
+
+                while (typeMirror != null && !typeMirror.toString().equals("java.lang.Object") && foundSuperType) {
+
+                    String name = typeMirror.toString().substring(typeMirror.toString().lastIndexOf(".") + 1, typeMirror.toString().length());
+
+                    if (additionalEntry.getKey().equals(name)) {
+                        etilEntry.getValue().addFields(additionalEntry.getValue());
+                    }
+
+                    foundSuperType = false;
+
+                    for (TypeMirror supertype : mTypeUtils.directSupertypes(typeMirror)) {
+                        if (supertype instanceof DeclaredType && mTypeUtils.asElement(supertype).getKind() != ElementKind.INTERFACE) {
+                            foundSuperType = true;
+                            typeMirror = ((DeclaredType) supertype).asElement().asType();
+                        }
+
+                    }
+
+
+                }
+
+
+            }
         }
 
         try {
@@ -111,11 +161,13 @@ public class EtilModelProcessor extends AbstractProcessor {
         return _annotatedMember.getModifiers().contains(Modifier.PUBLIC);
     }
 
+
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
         mMessager = processingEnv.getMessager();
         mFiler = processingEnv.getFiler();
+        mTypeUtils = processingEnv.getTypeUtils();
     }
 
     private boolean isValidClass(com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass item) {

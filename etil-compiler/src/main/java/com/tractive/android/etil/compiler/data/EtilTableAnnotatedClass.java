@@ -13,13 +13,13 @@ import javax.lang.model.type.MirroredTypeException;
 
 public class EtilTableAnnotatedClass {
 
-    public void addField(VariableElement _member) throws IllegalArgumentException {
 
+    public static FieldAndColumnInfo generateField(VariableElement _variableElement) {
         FieldAndColumnInfo info = new FieldAndColumnInfo();
 
-        info.fieldName = _member.getSimpleName().toString();
-        info.columnName = _member.getAnnotation(EtilField.class).value();
-        info.fieldType = _member.asType().toString().toLowerCase();
+        info.fieldName = _variableElement.getSimpleName().toString();
+        info.columnName = _variableElement.getAnnotation(EtilField.class).value();
+        info.fieldType = _variableElement.asType().toString().toLowerCase();
 
         switch (info.fieldType) {
             case "int":
@@ -53,8 +53,17 @@ public class EtilTableAnnotatedClass {
 
         }
 
-        mFieldAndColumnInfo.add(info);
+        return info;
+    }
 
+    public void addField(VariableElement _member) throws IllegalArgumentException {
+        mFieldAndColumnInfo.add(generateField(_member));
+    }
+
+
+
+    public void addFields(List<FieldAndColumnInfo> _fields) {
+        mFieldAndColumnInfo.addAll(_fields);
     }
 
     public static class FieldAndColumnInfo {

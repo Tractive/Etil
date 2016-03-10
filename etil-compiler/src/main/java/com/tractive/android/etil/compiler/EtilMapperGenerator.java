@@ -5,6 +5,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass;
@@ -24,6 +25,7 @@ public class EtilMapperGenerator {
 
     private final ClassName mContentValuesClass;
     private final ClassName mCursorClass;
+    private final ClassName mStringClass;
     private final TypeVariableName mTypeVariableT;
 
 
@@ -31,6 +33,7 @@ public class EtilMapperGenerator {
         mCursorClass = ClassName.get("android.database", "Cursor");
         mContentValuesClass = ClassName.get("android.content", "ContentValues");
         mTypeVariableT = TypeVariableName.get("T");
+        mStringClass = ClassName.get("java.lang", "String");
     }
 
     public void add(com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass _annotatedClass) {
@@ -64,10 +67,36 @@ public class EtilMapperGenerator {
         return cursorToModelMethod.build();
     }
 
+    private MethodSpec generateGetTableFromModelMethod() {
+        MethodSpec.Builder getTableFromModel = MethodSpec.methodBuilder("getTableNameFromModel")
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .addAnnotation(AnnotationSpec
+                        .builder(SuppressWarnings.class)
+                        .addMember("value", "$S", "unchecked")
+                        .build())
+
+                .returns(mStringClass)
+                .addTypeVariable(mTypeVariableT)
+                .addParameter(mTypeVariableT, "_model")
+                .beginControlFlow("switch (_model.getClass().getSimpleName())");
+
+        for (EtilTableAnnotatedClass etilTableClass : mEtilTableClasses) {
+            getTableFromModel.addCode("case $S:\n", etilTableClass.getSimpleTypeName())
+                    .addStatement("return $S", etilTableClass.getTableName());
+        }
+
+        getTableFromModel.addCode("default:\n")
+                .addStatement("throw new java.lang.IllegalArgumentException($S)", "Model is not defined via annotations")
+                .endControlFlow();
+
+        return getTableFromModel.build();
+    }
+
     private MethodSpec generateMapModelToContentValuesMethod() {
         MethodSpec.Builder modelToContentValuesMethod = MethodSpec.methodBuilder("mapModelToContentValues")
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                .addTypeVariable(mTypeVariableT).addParameter(mTypeVariableT, "_model")
+                .addTypeVariable(mTypeVariableT)
+                .addParameter(mTypeVariableT, "_model")
                 .returns(mContentValuesClass)
                 .beginControlFlow("switch (_model.getClass().getSimpleName())");
 
@@ -95,6 +124,7 @@ public class EtilMapperGenerator {
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .addMethod(generateMapCursorToModelMethod())
                 .addMethod(generateMapModelToContentValuesMethod())
+                .addMethod(generateGetTableFromModelMethod())
                 .addMethods(generateCursorToModelMethods())
                 .addMethods(generateModelToContentValuesMethods())
                 .build();
@@ -105,6 +135,7 @@ public class EtilMapperGenerator {
         javaFile.writeTo(_filer);
 
     }
+
 
     private Iterable<MethodSpec> generateModelToContentValuesMethods() {
         List<MethodSpec> methodSpecs = new ArrayList<>();

@@ -67,6 +67,31 @@ public class EtilMapperGenerator {
         return cursorToModelMethod.build();
     }
 
+    private MethodSpec generateGetTableFromModelClassMethod() {
+        MethodSpec.Builder getTableFromModel = MethodSpec.methodBuilder("getTableNameFromModelClass")
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+                .addAnnotation(AnnotationSpec
+                        .builder(SuppressWarnings.class)
+                        .addMember("value", "$S", "unchecked")
+                        .build())
+
+                .returns(mStringClass)
+                .addTypeVariable(mTypeVariableT)
+                .addParameter(ParameterizedTypeName.get(ClassName.get("java.lang", "Class"), mTypeVariableT), "_modelClass")
+                .beginControlFlow("switch (_modelClass.getSimpleName())");
+
+        for (EtilTableAnnotatedClass etilTableClass : mEtilTableClasses) {
+            getTableFromModel.addCode("case $S:\n", etilTableClass.getSimpleTypeName())
+                    .addStatement("return $S", etilTableClass.getTableName());
+        }
+
+        getTableFromModel.addCode("default:\n")
+                .addStatement("throw new java.lang.IllegalArgumentException($S)", "Model is not defined via annotations")
+                .endControlFlow();
+
+        return getTableFromModel.build();
+    }
+
     private MethodSpec generateGetTableFromModelMethod() {
         MethodSpec.Builder getTableFromModel = MethodSpec.methodBuilder("getTableNameFromModel")
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
@@ -78,17 +103,7 @@ public class EtilMapperGenerator {
                 .returns(mStringClass)
                 .addTypeVariable(mTypeVariableT)
                 .addParameter(mTypeVariableT, "_model")
-                .beginControlFlow("switch (_model.getClass().getSimpleName())");
-
-        for (EtilTableAnnotatedClass etilTableClass : mEtilTableClasses) {
-            getTableFromModel.addCode("case $S:\n", etilTableClass.getSimpleTypeName())
-                    .addStatement("return $S", etilTableClass.getTableName());
-        }
-
-        getTableFromModel.addCode("default:\n")
-                .addStatement("throw new java.lang.IllegalArgumentException($S)", "Model is not defined via annotations")
-                .endControlFlow();
-
+                .addStatement("return getTableNameFromModelClass(_model.getClass())");
         return getTableFromModel.build();
     }
 
@@ -125,6 +140,7 @@ public class EtilMapperGenerator {
                 .addMethod(generateMapCursorToModelMethod())
                 .addMethod(generateMapModelToContentValuesMethod())
                 .addMethod(generateGetTableFromModelMethod())
+                .addMethod(generateGetTableFromModelClassMethod())
                 .addMethods(generateCursorToModelMethods())
                 .addMethods(generateModelToContentValuesMethods())
                 .build();

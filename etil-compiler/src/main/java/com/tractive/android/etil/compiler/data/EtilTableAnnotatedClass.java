@@ -11,7 +11,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.MirroredTypeException;
 
-public class EtilTableAnnotatedClass {
+public abstract class EtilTableAnnotatedClass {
 
 
     public static FieldAndColumnInfo generateField(VariableElement _variableElement) {
@@ -74,7 +74,6 @@ public class EtilTableAnnotatedClass {
         public String fieldType;
     }
 
-    private String mTableName;
     private TypeElement annotatedClassElement;
     private String qualifiedSuperClassName;
     private String simpleTypeName;
@@ -82,15 +81,6 @@ public class EtilTableAnnotatedClass {
 
     public EtilTableAnnotatedClass(TypeElement classElement) throws IllegalArgumentException {
         annotatedClassElement = classElement;
-        EtilTable annotation = classElement.getAnnotation(EtilTable.class);
-        mTableName = annotation.value();
-
-        if (mTableName == null || mTableName.equals("")) {
-            throw new IllegalArgumentException(
-                    String.format("value() in @%s for class %s is null or empty! that's not allowed",
-                            EtilTable.class.getSimpleName(), classElement.getQualifiedName().toString()));
-        }
-
         try {
 
             qualifiedSuperClassName = annotatedClassElement.getQualifiedName().toString();
@@ -106,9 +96,7 @@ public class EtilTableAnnotatedClass {
     }
 
 
-    public String getTableName() {
-        return mTableName;
-    }
+
 
     public String getSimpleTypeName() {
         return simpleTypeName;

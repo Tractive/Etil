@@ -4,13 +4,18 @@ import com.google.auto.service.AutoService;
 
 import com.tractive.android.etil.annotations.EtilField;
 import com.tractive.android.etil.annotations.EtilTable;
+import com.tractive.android.etil.annotations.MultiEtilTable;
 import com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass;
+import com.tractive.android.etil.compiler.data.MultiSingleEtilTableAnnotatedClass;
+import com.tractive.android.etil.compiler.data.SingleEtilTableAnnotatedClass;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,7 +49,7 @@ public class EtilModelProcessor extends AbstractProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return Collections.singleton(EtilTable.class.getCanonicalName());
+        return new HashSet<>(Arrays.asList(EtilTable.class.getCanonicalName(), MultiEtilTable.class.getCanonicalName()));
     }
 
     @Override
@@ -55,28 +60,45 @@ public class EtilModelProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
-        HashMap<String, com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass> etilTableClasses = new HashMap<>();
+        HashMap<String, SingleEtilTableAnnotatedClass> singleEtilTableClasses = new HashMap<>();
+        HashMap<String, MultiSingleEtilTableAnnotatedClass> multiEtilTableClasses = new HashMap<>();
         HashMap<String, List<EtilTableAnnotatedClass.FieldAndColumnInfo>> additionalTableClasses = new HashMap<>();
         EtilMapperGenerator classes = new EtilMapperGenerator();
 
         for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(EtilTable.class)) {
             TypeElement typeElement = (TypeElement) annotatedElement;
             try {
-                com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass
-                        annotatedClass = new com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass(typeElement);
+                SingleEtilTableAnnotatedClass
+                        annotatedClass = new SingleEtilTableAnnotatedClass(typeElement);
 
                 if (!isValidClass(annotatedClass)) {
                     return true;
                 }
 
-                etilTableClasses.put(typeElement.getSimpleName().toString(), annotatedClass);
+                singleEtilTableClasses.put(typeElement.getSimpleName().toString(), annotatedClass);
                 classes.add(annotatedClass);
-
             } catch (IllegalArgumentException e) {
                 error(typeElement, e.getMessage());
                 return true;
             }
+        }
 
+        for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(MultiEtilTable.class)) {
+            TypeElement typeElement = (TypeElement) annotatedElement;
+            try {
+                MultiSingleEtilTableAnnotatedClass
+                        annotatedClass = new MultiSingleEtilTableAnnotatedClass(typeElement);
+
+                if (!isValidClass(annotatedClass)) {
+                    return true;
+                }
+
+                multiEtilTableClasses.put(typeElement.getSimpleName().toString(), annotatedClass);
+                classes.add(annotatedClass);
+            } catch (IllegalArgumentException e) {
+                error(typeElement, e.getMessage());
+                return true;
+            }
         }
 
         for (Element annotatedMember : roundEnv.getElementsAnnotatedWith(EtilField.class)) {
@@ -89,33 +111,32 @@ public class EtilModelProcessor extends AbstractProcessor {
             }
 
             String simpleNameClass = variableElement.getEnclosingElement().getSimpleName().toString();
-            EtilTableAnnotatedClass table = etilTableClasses.get(simpleNameClass);
-
-            if (table == null) {
-
-                List<EtilTableAnnotatedClass.FieldAndColumnInfo> fieldInfos = additionalTableClasses.get(simpleNameClass);
-
-                if (fieldInfos == null) {
-                    fieldInfos = new ArrayList<>();
-                    additionalTableClasses.put(simpleNameClass, fieldInfos);
-                }
-
-                fieldInfos.add(EtilTableAnnotatedClass.generateField(variableElement));
-                continue;
-            }
+            SingleEtilTableAnnotatedClass singleTable = singleEtilTableClasses.get(simpleNameClass);
+            MultiSingleEtilTableAnnotatedClass multiTable = multiEtilTableClasses.get(simpleNameClass);
 
             try {
-                table.addField(variableElement);
+                if (singleTable == null && multiTable != null) {
+                    multiTable.addField(variableElement);
+                } else if (singleTable != null && multiTable == null) {
+                    singleTable.addField(variableElement);
+                } else {
 
+                    List<EtilTableAnnotatedClass.FieldAndColumnInfo> fieldInfos = additionalTableClasses.get(simpleNameClass);
+
+                    if (fieldInfos == null) {
+                        fieldInfos = new ArrayList<>();
+                        additionalTableClasses.put(simpleNameClass, fieldInfos);
+                    }
+
+                    fieldInfos.add(EtilTableAnnotatedClass.generateField(variableElement));
+                }
             } catch (IllegalArgumentException e) {
                 error(null, e.getMessage());
-
             }
-
         }
 
         for (Map.Entry<String, List<EtilTableAnnotatedClass.FieldAndColumnInfo>> additionalEntry : additionalTableClasses.entrySet()) {
-            for (Map.Entry<String, EtilTableAnnotatedClass> etilEntry : etilTableClasses.entrySet()) {
+            for (Map.Entry<String, SingleEtilTableAnnotatedClass> etilEntry : singleEtilTableClasses.entrySet()) {
 
                 TypeMirror typeMirror = etilEntry.getValue().getTypeElement().getSuperclass();
 
@@ -136,13 +157,8 @@ public class EtilModelProcessor extends AbstractProcessor {
                             foundSuperType = true;
                             typeMirror = ((DeclaredType) supertype).asElement().asType();
                         }
-
                     }
-
-
                 }
-
-
             }
         }
 
@@ -182,8 +198,8 @@ public class EtilModelProcessor extends AbstractProcessor {
 
         // Check if it's an abstract class
         if (classElement.getModifiers().contains(Modifier.ABSTRACT)) {
-            error(classElement, "The class %s is abstract. You can't annotate abstract classes with @%",
-                    classElement.getQualifiedName().toString(), EtilTable.class.getSimpleName());
+            error(classElement, "The class %s is abstract. You can't annotate abstract classes with @% or @%",
+                    classElement.getQualifiedName().toString(), EtilTable.class.getSimpleName(), MultiEtilTable.class.getSimpleName());
             return false;
         }
 

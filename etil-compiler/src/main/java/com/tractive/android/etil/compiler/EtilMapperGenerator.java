@@ -5,10 +5,13 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
-import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
+import com.sun.org.apache.xpath.internal.operations.Mult;
+import com.tractive.android.etil.annotations.EtilTable;
 import com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass;
+import com.tractive.android.etil.compiler.data.MultiSingleEtilTableAnnotatedClass;
+import com.tractive.android.etil.compiler.data.SingleEtilTableAnnotatedClass;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,7 +24,8 @@ import javax.lang.model.element.Modifier;
 public class EtilMapperGenerator {
 
     public static final String CLASS_NAME = "EtilMapper";
-    public List<com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass> mEtilTableClasses = new ArrayList<>();
+    public List<SingleEtilTableAnnotatedClass> mSingleTableClasses = new ArrayList<>();
+    public List<com.tractive.android.etil.compiler.data.MultiSingleEtilTableAnnotatedClass> mMultiTableClasses = new ArrayList<>();
 
     private final ClassName mContentValuesClass;
     private final ClassName mCursorClass;
@@ -36,9 +40,12 @@ public class EtilMapperGenerator {
         mStringClass = ClassName.get("java.lang", "String");
     }
 
-    public void add(com.tractive.android.etil.compiler.data.EtilTableAnnotatedClass _annotatedClass) {
-        mEtilTableClasses.add(_annotatedClass);
+    public void add(SingleEtilTableAnnotatedClass _annotatedClass) {
+        mSingleTableClasses.add(_annotatedClass);
+    }
 
+    public void add(MultiSingleEtilTableAnnotatedClass _annotatedClass) {
+        mMultiTableClasses.add(_annotatedClass);
     }
 
     private MethodSpec generateMapCursorToModelMethod() {
@@ -55,7 +62,12 @@ public class EtilMapperGenerator {
                 .addParameter(mCursorClass, "_cursor")
                 .beginControlFlow("switch (_class.getSimpleName())");
 
-        for (EtilTableAnnotatedClass etilTableClass : mEtilTableClasses) {
+        for (EtilTableAnnotatedClass etilTableClass : mSingleTableClasses) {
+            cursorToModelMethod.addCode("case $S:\n", etilTableClass.getSimpleTypeName())
+                    .addStatement("return (T) cursorTo" + etilTableClass.getSimpleTypeName() + "(_cursor)");
+        }
+
+        for (EtilTableAnnotatedClass etilTableClass : mMultiTableClasses) {
             cursorToModelMethod.addCode("case $S:\n", etilTableClass.getSimpleTypeName())
                     .addStatement("return (T) cursorTo" + etilTableClass.getSimpleTypeName() + "(_cursor)");
         }
@@ -80,7 +92,7 @@ public class EtilMapperGenerator {
                 .addParameter(ParameterizedTypeName.get(ClassName.get("java.lang", "Class"), mTypeVariableT), "_modelClass")
                 .beginControlFlow("switch (_modelClass.getSimpleName())");
 
-        for (EtilTableAnnotatedClass etilTableClass : mEtilTableClasses) {
+        for (SingleEtilTableAnnotatedClass etilTableClass : mSingleTableClasses) {
             getTableFromModel.addCode("case $S:\n", etilTableClass.getSimpleTypeName())
                     .addStatement("return $S", etilTableClass.getTableName());
         }
@@ -115,7 +127,12 @@ public class EtilMapperGenerator {
                 .returns(mContentValuesClass)
                 .beginControlFlow("switch (_model.getClass().getSimpleName())");
 
-        for (EtilTableAnnotatedClass etilTableClass : mEtilTableClasses) {
+        for (EtilTableAnnotatedClass etilTableClass : mSingleTableClasses) {
+            modelToContentValuesMethod.addCode("case \"" + etilTableClass.getSimpleTypeName() + "\":\n")
+                    .addStatement("return " + decapitalize(etilTableClass.getSimpleTypeName()) + "ToContentValues(_model)");
+        }
+
+        for (EtilTableAnnotatedClass etilTableClass : mMultiTableClasses) {
             modelToContentValuesMethod.addCode("case \"" + etilTableClass.getSimpleTypeName() + "\":\n")
                     .addStatement("return " + decapitalize(etilTableClass.getSimpleTypeName()) + "ToContentValues(_model)");
         }
@@ -125,13 +142,11 @@ public class EtilMapperGenerator {
                 .endControlFlow();
 
         return modelToContentValuesMethod.build();
-
-
     }
 
 
     public void generateCode(Filer _filer) throws IOException {
-        if (mEtilTableClasses.size() == 0) {
+        if (mSingleTableClasses.size() == 0) {
             return;
         }
 
@@ -149,13 +164,15 @@ public class EtilMapperGenerator {
                 .build();
 
         javaFile.writeTo(_filer);
-
     }
 
 
     private Iterable<MethodSpec> generateModelToContentValuesMethods() {
         List<MethodSpec> methodSpecs = new ArrayList<>();
-        for (EtilTableAnnotatedClass _etilTableClass : mEtilTableClasses) {
+        List<EtilTableAnnotatedClass> allEtilTableClasses = new ArrayList<>();
+        allEtilTableClasses.addAll(mMultiTableClasses);
+        allEtilTableClasses.addAll(mSingleTableClasses);
+        for (EtilTableAnnotatedClass _etilTableClass : allEtilTableClasses) {
 
             MethodSpec.Builder builder = MethodSpec
                     .methodBuilder(decapitalize(_etilTableClass.getSimpleTypeName()) + "ToContentValues")
@@ -186,7 +203,11 @@ public class EtilMapperGenerator {
 
     private Iterable<MethodSpec> generateCursorToModelMethods() {
         List<MethodSpec> methodSpecs = new ArrayList<>();
-        for (EtilTableAnnotatedClass _etilTableClass : mEtilTableClasses) {
+
+        List<EtilTableAnnotatedClass> allEtilTableClasses = new ArrayList<>();
+        allEtilTableClasses.addAll(mMultiTableClasses);
+        allEtilTableClasses.addAll(mSingleTableClasses);
+        for (EtilTableAnnotatedClass _etilTableClass : allEtilTableClasses) {
 
             MethodSpec.Builder builder = MethodSpec
                     .methodBuilder("cursorTo" + _etilTableClass.getSimpleTypeName())
@@ -206,7 +227,6 @@ public class EtilMapperGenerator {
             builder.returns(ClassName.get(_etilTableClass.getTypeElement()))
                     .addStatement("return model");
             methodSpecs.add(builder.build());
-
         }
 
         return methodSpecs;
@@ -220,6 +240,4 @@ public class EtilMapperGenerator {
         c[0] = Character.toLowerCase(c[0]);
         return new String(c);
     }
-
-
 }

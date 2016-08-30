@@ -97,6 +97,11 @@ public class EtilMapperGenerator {
                     .addStatement("return $S", etilTableClass.getTableName());
         }
 
+        for (MultiSingleEtilTableAnnotatedClass etilTableClass : mMultiTableClasses) {
+            getTableFromModel.addCode("case $S:\n", etilTableClass.getSimpleTypeName())
+                    .addStatement("throw new java.lang.IllegalArgumentException($S)", "Can't get a table from a class annotated with @MultiEtilTable");
+        }
+
         getTableFromModel.addCode("default:\n")
                 .addStatement("throw new java.lang.IllegalArgumentException($S)", "Model is not defined via annotations")
                 .endControlFlow();

@@ -107,6 +107,22 @@ public class Cat extends Mammal {
 ```
 Converting Cursor to Cat will set "id", "name", "hasATracker" and "secretlyPlotsToKillYou".
 
+##### Model from multiple Tables
+Sometime you have more complicated SQL queries that creates cursor object that has columns from multiple teams. In this case you can indicate via @MuliEtilTable that the model has more than one table. For example
+
+```java
+@MultiEtilTable
+public class MammalCat  {
+ 
+    @EtilField("secretly_plots_to_kill_you")
+    public boolean secretlyPlotsToKillYou;
+    
+    @EtilField("has_a_tracker")
+    public boolean hasATracker;
+}
+```
+In this case the getTableNameFromModel and getTableNameFromModelClass will just throw an error as you don't have a single table for this model. Currently there is no support for multi table model that have the same column name. You can however change your column name via "AS" in your sql statement. 
+
 ## Download
 
 ##### Gradle

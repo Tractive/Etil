@@ -139,8 +139,8 @@ In your build.gradle in your app folder:
 apply plugin: 'com.neenbedankt.android-apt'
 ​
 dependencies {
-	  compile 'com.github.tractive.etil:etil-annotations:v0.4.1'
-	  apt 'com.github.tractive.etil:etil-compiler:v0.4.1'
+	  compile 'com.github.tractive.etil:etil-annotations:v0.5.1'
+	  apt 'com.github.tractive.etil:etil-compiler:v0.5.1'
 }
 ```
 For the current Version check the releases.
